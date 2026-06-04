@@ -74,7 +74,7 @@ LEGALES:
 
 Responde de forma concisa, profesional y en español. Si no tienes información sobre algo, indícalo. Enfócate en ayudar rápidamente.`;
 
-  try {
+try {
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_API_KEY,
       {
@@ -83,9 +83,6 @@ Responde de forma concisa, profesional y en español. Si no tienes información 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          system: {
-            parts: [{ text: systemPrompt }]
-          },
           contents: messages,
           generationConfig: {
             temperature: 0.7,
@@ -112,4 +109,3 @@ Responde de forma concisa, profesional y en español. Si no tienes información 
     console.error('Error:', error);
     return res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
-}
