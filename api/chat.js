@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,23 +11,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { messages } = req.body;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-  if (!GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'API key not configured' });
-  }
-
-  const systemPrompt = `Eres un asistente de soporte interno de inphonity. Responde en español, profesional y conciso sobre: Alta de línea, Soporte técnico, Cashback, SIM/eSIM, Pagos, Cambios de planes, Roaming, MiFi, App inphonity, Legales.`;
-
   try {
+    const { messages } = req.body;
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+    if (!GEMINI_API_KEY) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: messages,
+          contents: messages || [],
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 1024,
@@ -39,15 +37,22 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    if (!response.ok) {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.status(200).json({ message: data.candidates[0].content.parts[0].text });
+      return res.status(response.status).json({ message: `Error API: ${data.error?.message || 'Unknown error'}` });
+    }
+
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      const message = data.candidates[0].content.parts[0].text;
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.status(200).json({ message });
     }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(200).json({ message: 'Error procesando respuesta' });
+    return res.status(200).json({ message: 'Sin respuesta de la IA' });
+
   } catch (error) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ message: `Error: ${error.message}` });
   }
 }
