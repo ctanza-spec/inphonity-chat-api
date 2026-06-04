@@ -1,0 +1,7 @@
+{
+  "name": "inphonity-chat-api",
+  "version": "1.0.0",
+  "description": "Chat API for Inphonity",
+  "main": "api/chat.js",
+  "type": "module"
+}
